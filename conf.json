@@ -1,9 +1,0 @@
-{
-  "path": [
-    {"name": "法律", "path": "http://www.faxin.cn/lib/zyfl/ZyflLibrary.aspx?libid=010101"}, 
-    {"name": "司法解释", "path": "http://www.faxin.cn/lib/zyfl/ZyflLibrary.aspx?libid=010102"},
-    {"name": "行政法规", "path": "http://www.faxin.cn/lib/zyfl/ZyflLibrary.aspx?libid=010103"},
-    {"name": "部门规章", "path": "http://www.faxin.cn/lib/zyfl/ZyflLibrary.aspx?libid=010104"},
-    {"name": "其他文件", "path": "http://www.faxin.cn/lib/zyfl/ZyflLibrary.aspx?libid=010105"}
-  ]
-}
