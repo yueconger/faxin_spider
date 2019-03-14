@@ -4,55 +4,90 @@
 # @File    : conf.py
 import requests
 import json
+import random
 import re
+import time
+from selenium import webdriver
 import time
 
 
 class settings_init(object):
     def __init__(self):
-        self.homepage_url = 'http://www.faxin.cn/search/GeneralLawSearch.aspx'
+        self.homepage_url = 'http://www.faxin.cn/index.aspx'
         self.login_url = 'http://www.faxin.cn/login.aspx'
+        self.login_out_url = 'http://www.faxin.cn/login.aspx'
+        self.check_url = 'http://www.faxin.cn/user/check_user.ashx'
         self.headers = {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
             'Accept-Encoding': 'gzip, deflate',
             'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-            'Cache-Control': 'max-age=0',
             'Connection': 'keep-alive',
             'Host': 'www.faxin.cn',
-            'Referer': 'http://www.faxin.cn/',
+            'Referer': 'http://www.faxin.cn/login.aspx',
             'Upgrade-Insecure-Requests': '1',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36'
         }
-        self.formdata = "WebUCHead_Special1%24hiddIsLogin=0&WebUCSearchNoAdvSearch1%24lib=&keyword=&user_name=394044548%40qq.com&user_password=zjt19921116"
-    def get_session(self):
-        url = self.homepage_url
-        s = requests.Session()
-        response = s.get(url, headers=self.headers)
-        session = response.cookies
-        cookies = session.items()
-        cookie = '='.join(list(cookies[0]))
+
+    def set_formdata(self, user_name, user_password):
+        form_data = {
+            '__VIEWSTATE': '/wEPDwUJMTg3MTkxMzg4ZBgBBR5fX0NvbnRyb2xzUmVxdWlyZVBvc3RCYWNrS2V5X18WAgUKaXNSZW1lbWJlcgULaXNBdXRvTG9naW4=',
+            'WebUCHead_Special1$hiddIsLogin': '0',
+            'WebUCSearchNoAdvSearch1$lib': '',
+            'keyword': '',
+            'user_name': user_name,
+            'user_password': user_password
+        }
+        return form_data
+
+    def check_status(self, form_data):
+        response = requests.post(url=self.check_url, headers=self.headers, data=form_data, allow_redirects=False)
+        print(response.content.decode())
+
+    def get_cookies(self, form_data):
+        res = requests.post(url=self.login_url, headers=self.headers, data=form_data, allow_redirects=False)
+        cookies = requests.utils.dict_from_cookiejar(res.cookies)
+        print(cookies)
+        html = res.content.decode()
+        print(res.content.decode())
+        if 'lawapp_web' in str(cookies):
+            print('登录正常, 入库')
+
+            with open('cookies.txt', 'a+', encoding='utf-8') as f:
+                f.write(str(cookies) + '\n')
+        else:
+            print('登录失败')
+            if '登录用户已超出在线数' in html:
+                print('此账号已登录')
+            else:
+                print('账号出错')
+            self.check_status(form_data)
+
+    def login_selenium(self):
+        browser = webdriver.Chrome()
+        browser.get(self.login_url)
+        browser.find_elements_by_xpath('//input[@name="user_name"]')[0].send_keys('miao2019')
+        browser.find_elements_by_xpath('//input[@name="user_password"]')[0].send_keys('13245768')
+        browser.find_elements_by_xpath('//input[@name="button"]')[0].click()
+        time.sleep(1)
+        cookies = requests.utils.dict_from_cookiejar(browser.get_cookies())
+        print(cookies)
+
+    def random_cookie(self):
+        with open(r'E:\gitee\faxin_spider\FaxinSpider\cookies.json', 'r', encoding='utf-8') as jf:
+            cookie_list = json.load(jf)
+        random_num = random.randint(0, len(cookie_list)-1)
+        cookie = cookie_list[random_num]
         return cookie
-
-    def login_in(self):
-        cookie = "ASP.NET_SessionId=otquuqu5xjb5uhfouyx01w3c; Hm_lvt_a317640b4aeca83b20c90d410335b70f=1552267033,1552353636; Hm_lvt_a4967c0c3b39fcfba3a7e03f2e807c06=1552302923,1552353636; sid=otquuqu5xjb5uhfouyx01w3c; isAutoLogin=off; lawapp_web=9F4659AFF9827CA8364C171FDF69856D5E8EB49BA8F88BF7FDC058FCD8A75A9349291AFE75CB2DCB424CD93BD9FF4C9E42D341E05448ECA5E83F9CD1CF22292EF3E9B001B09E37487349FCC91A693636F6A47FB297A7280DA15B405EA8C4ACFE3818BF7398972C57B445F4F1E81EA040304555FA3E8AFF3C5EEC3C49049ED563A6754E9953AE61A8D4CCCE563C518402697368426F8EA00614C8052DB702C7666E54AB98; Hm_lpvt_a4967c0c3b39fcfba3a7e03f2e807c06=1552358530; Hm_lpvt_a317640b4aeca83b20c90d410335b70f=1552358732"
-        headers = self.headers
-        headers['Cookie'] = cookie
-        response = requests.post(self.login_url, data=self.formdata, headers=headers)
-        # return response.content.decode()
-        # cookies = response.cookies
-        # return cookies
-
-        index_url = 'http://www.faxin.cn/index.aspx'
-        res = requests.get(index_url, headers=headers)
-        coo = res.cookies
-        print(coo.items())
-        return res.content.decode()
-
-
 
 if __name__ == '__main__':
     settings_init = settings_init()
-    # cookie = settings_init.get_session()
-    # print(cookie)
-    res = settings_init.login_in()
-    print(res)
+    # settings_init.random_cookie()
+
+    with open('./FaxinSpider/password.json') as jf:
+        account_list = json.load(jf)
+    # random_num = random.randint(0, len(account_list))
+    for random_num in range(len(account_list)):
+        user_name, user_password = account_list[random_num].values()
+        print(user_name, user_password)
+        form_data = settings_init.set_formdata(user_name, user_password)
+        settings_init.get_cookies(form_data)

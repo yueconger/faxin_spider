@@ -5,6 +5,7 @@ import re
 import time
 from lxml import etree
 from scrapy.conf import settings
+from conf import settings_init
 
 class FaxinSpider(scrapy.Spider):
     name = 'faxin'
@@ -34,18 +35,14 @@ class FaxinSpider(scrapy.Spider):
         'Upgrade-Insecure-Requests': '1',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36'
     }
-    local_server = r'E:\LocalServer\Faxin_Law\部门规章/'
-    cookie = settings['COOKIE']
+    local_server = r'E:\LocalServer\Faxin_Law\国家_html\部门规章_new/'
 
     def start_requests(self):
         with open('conf.json', 'r', encoding='utf-8') as f:
             con = json.load(f)
         effect_path = con['effect_path'][3]
-
-        for page in range(1,90):
+        for page in range(66, 71):
             page = str(page)
-            # temp = json.dumps(form_data)
-            # print(temp)
             form_data = "keyTitle=&keyContent=&fdep_id=&fwzh=&pdep_id=&sort_id=&xiaoli_id={effect_id}&Fdate_b=&Fdate_e=&Pdate_b=&Pdate_e=&shixiao_id=&Sdate_b=&Sdate_e=&searchtype=0&showsummary=undefined&ckbInSearch=undefined&lib=zyfl&chooseNum=&firstPage={page}&secondPage={page}&thirdPage={page}&fourthPage={page}&fifthPage={page}&sixthPage={page}&sort_field=-排序号,-发布日期&listnum=50&sort_id_left=&xiaoli_id_left=&shixiao_id_left=&fdep_id_left=&isAdvSearch=&usersearchtype=undefined"
             form_data = form_data.format(effect_id=effect_path['effect_id'], page=page)
             yield scrapy.Request(
@@ -54,7 +51,6 @@ class FaxinSpider(scrapy.Spider):
                 body=form_data,
                 headers=self.headers,
                 callback=self.parse,
-                dont_filter=True
             )
 
     def parse(self, response):
@@ -77,32 +73,54 @@ class FaxinSpider(scrapy.Spider):
                     print(law_url)
                     law_name = li.xpath('./a/text()')[0]
                     print(law_name, 'law_name')
-                    url = 'http://www.faxin.cn/lib/zyfl/' + law_url
-                    print(url)
+                    law_url = 'http://www.faxin.cn/lib/zyfl/' + law_url
+                    cookie = settings_init().random_cookie()
                     yield scrapy.Request(
-                        url=url,
+                        url=law_url,
                         headers=self.headers_detail,
-                        cookies=self.cookie,
-                        meta={'law_url': law_url, 'law_name':law_name, },
-                        callback=self.parse_law
+                        cookies=cookie,
+                        meta={'law_url': law_url, 'law_name': law_name},
+                        callback=self.parse_law,
+                        dont_filter=True
                     )
 
     def parse_law(self, response):
         print('-----')
         law_name = response.meta['law_name']
+        law_url = response.meta['law_url']
         name_id = response.meta['law_url'].split('gid=')[-1].split('&libid')[0]
         html = response.text
         verification_res = re.findall('您的访问频率过快，请稍后刷新！', html)
         if len(verification_res) > 0:
-            time.sleep(3)
+            print('访问过快')
+            time.sleep(2)
+            self.parse_law(response)
         else:
-            file_name = self.local_server + law_name + '.html'
+            if 'a class="login" href="/login.aspx"' in html:
+                print('账号登录失败')
+                self.parse_law_again(law_url, response)
+            else:
+                print('----------------------')
+                file_name = self.local_server + law_name + '.html'
 
-            try:
-                with open(file_name, 'w', encoding='utf-8') as f:
-                    f.write(html)
-            except:
-                file_name = self.local_server + name_id + '.html'
-                with open(file_name, 'w', encoding='utf-8') as f:
-                    f.write(html)
-            print(law_name, '下载完毕!')
+                try:
+                    with open(file_name, 'w', encoding='utf-8') as f:
+                        f.write(html)
+                except:
+                    file_name = self.local_server + name_id + '.html'
+                    with open(file_name, 'w', encoding='utf-8') as f:
+                        f.write(html)
+                print(law_name, '下载完毕!')
+
+    def parse_law_again(self, law_url, response):
+        cookie = settings_init().random_cookie()
+        print(cookie)
+        law_name = response.meta['law_name']
+        yield scrapy.Request(
+            url=law_url,
+            headers=self.headers_detail,
+            cookies=cookie,
+            meta={'law_url': law_url, 'law_name': law_name},
+            callback=self.parse_law,
+            dont_filter=True
+        )
