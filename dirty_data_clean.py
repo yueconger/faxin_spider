@@ -9,7 +9,7 @@ from lxml import etree
 
 
 class DirtyDataClean(object):
-
+    """法律文件转txt,法律信息抽取"""
     def html_trans(self, html_dir, txt_dir):
         html_list = os.listdir(html_dir)  # 列出文件夹下所有的目录与文件
         for j in range(0, len(html_list)):
@@ -58,7 +58,7 @@ class DirtyDataClean(object):
             """正文部分"""
             full_text = tree.xpath('//div[@class="box fulltext"]')[0]
             full_text_str = etree.tostring(full_text, encoding='utf-8').decode()
-            full_text_str = re.sub('<!--remark-->|<a .*?>|</a>|<span.*?>|</span>|<br.*?>|<div.*?>|</div>', '', full_text_str)
+            full_text_str = re.sub('<!--remark-->|<a .*?>|</a>|<span.*?>|</span>|<br.*?>|<div.*?>|</div>|<h5>|</h5>', '', full_text_str)
 
             txt_path = txt_dir + law_name + '.txt'
             try:
@@ -72,9 +72,9 @@ class DirtyDataClean(object):
             print(law_name, '文件内容保存成功!')
 
     def law_info_save(self, law_info):
-        law_info = str(law_info)
+        jsObj = json.dumps(law_info, ensure_ascii=False)
         with open(r'E:\LocalServer\Faxin_Law\国家_json\部门规章.txt', 'a+', encoding='utf-8') as f:
-            f.write(law_info + '\n')
+            f.write(jsObj + '\n')
 
 
 if __name__ == '__main__':

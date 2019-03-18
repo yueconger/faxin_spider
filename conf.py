@@ -73,21 +73,22 @@ class settings_init(object):
         print(cookies)
 
     def random_cookie(self):
-        with open(r'E:\gitee\faxin_spider\FaxinSpider\cookies.json', 'r', encoding='utf-8') as jf:
-            cookie_list = json.load(jf)
-        random_num = random.randint(0, len(cookie_list)-1)
-        cookie = cookie_list[random_num]
+        url = "http://127.0.0.1:5000/faxin/random"
+        response = requests.get(url)
+        html = response.content.decode()
+        cookie = json.loads(html)
         return cookie
+
 
 if __name__ == '__main__':
     settings_init = settings_init()
     # settings_init.random_cookie()
 
-    with open('./FaxinSpider/password.json') as jf:
-        account_list = json.load(jf)
-    # random_num = random.randint(0, len(account_list))
-    for random_num in range(len(account_list)):
-        user_name, user_password = account_list[random_num].values()
-        print(user_name, user_password)
-        form_data = settings_init.set_formdata(user_name, user_password)
-        settings_init.get_cookies(form_data)
+    # with open('./FaxinSpider/password.json') as jf:
+    #     account_list = json.load(jf)
+    # # random_num = random.randint(0, len(account_list))
+    # for random_num in range(len(account_list)):
+    #     user_name, user_password = account_list[random_num].values()
+    #     print(user_name, user_password)
+    #     form_data = settings_init.set_formdata(user_name, user_password)
+    #     settings_init.get_cookies(form_data)
