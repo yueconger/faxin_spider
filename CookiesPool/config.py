@@ -30,7 +30,7 @@ TEST_URL_MAP = {
 }
 
 # 产生器和验证器循环周期
-CYCLE = 600
+CYCLE = 900
 
 # API地址和端口
 API_HOST = '127.0.0.1'

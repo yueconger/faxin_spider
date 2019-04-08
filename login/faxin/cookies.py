@@ -63,5 +63,5 @@ class FaxinCookies(object):
 
 
 if __name__ == '__main__':
-    result = FaxinCookies('chen_03', 'chen_03').main()
+    result = FaxinCookies('lg123321', '123321').main()
     print(result)

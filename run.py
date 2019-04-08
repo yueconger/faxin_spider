@@ -7,6 +7,7 @@ from CookiesPool.scheduler import Scheduler
 
 
 def main():
+    """cookie池维护启动"""
     s = Scheduler()
     s.run()
 

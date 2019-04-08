@@ -5,4 +5,5 @@
 from CookiesPool.importer import scan
 
 if __name__ == '__main__':
+    """添加账号"""
     scan()
